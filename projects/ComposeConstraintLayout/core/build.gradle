@@ -5,6 +5,16 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
+allprojects {
+    //Support @JvmDefault
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+        kotlinOptions {
+            freeCompilerArgs = ['-Xjvm-default=enable']
+            jvmTarget = JavaVersion.VERSION_1_8.toString()
+        }
+    }
+}
+
 sourceSets{
     main {
         main.java.srcDirs = ['../../../constraintlayout/core/src/main/java']
@@ -14,4 +24,5 @@ sourceSets{
 
 dependencies {
     testImplementation "junit:junit:4.13.1"
+    implementation "androidx.annotation:annotation:1.5.0"
 }
