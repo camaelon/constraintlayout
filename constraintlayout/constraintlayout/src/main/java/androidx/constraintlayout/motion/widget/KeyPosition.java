@@ -51,6 +51,7 @@ public class KeyPosition extends KeyPositionBase {
     float mPercentY = Float.NaN;
     float mAltPercentX = Float.NaN;
     float mAltPercentY = Float.NaN;
+    public static final int TYPE_AXIS = 3;
     public static final int TYPE_SCREEN = 2;
     public static final int TYPE_PATH = 1;
     public static final int TYPE_CARTESIAN = 0;
@@ -96,6 +97,9 @@ public class KeyPosition extends KeyPositionBase {
             case TYPE_PATH:
                 calcPathPosition(startX, startY, endX, endY);
                 return;
+            case TYPE_AXIS:
+                calcAxisPosition(startX, startY, endX, endY);
+                return;
             case TYPE_CARTESIAN:
             default:
                 calcCartesianPosition(startX, startY, endX, endY);
@@ -133,6 +137,19 @@ public class KeyPosition extends KeyPositionBase {
         mCalculatedPositionY = (int) (startY + pathVectorX * dydx + pathVectorY * dydy);
     }
 
+    private void calcAxisPosition(float startX, float startY,
+                                       float endX, float endY) {
+        float pathVectorX = Math.abs(endX - startX);
+        float pathVectorY = Math.abs(endY - startY);
+        float minX = Math.min(startX,endX);
+        float minY = Math.min(startY,endY);
+        float dxdx = Float.isNaN(mPercentX) ? 0 : mPercentX;
+        float dydx = Float.isNaN(mAltPercentY) ? 0 : mAltPercentY;
+        float dydy = Float.isNaN(mPercentY) ? 0 : mPercentY;
+        float dxdy = Float.isNaN(mAltPercentX) ? 0 : mAltPercentX;
+        mCalculatedPositionX = (int) (minX + pathVectorX * dxdx + pathVectorY * dxdy);
+        mCalculatedPositionY = (int) (minY + pathVectorX * dydx + pathVectorY * dydy);
+    }
     @Override
     float getPositionX() {
         return mCalculatedPositionX;
@@ -158,6 +175,9 @@ public class KeyPosition extends KeyPositionBase {
                 return;
             case TYPE_SCREEN:
                 positionScreenAttributes(view, start, end, x, y, attribute, value);
+                return;
+            case TYPE_AXIS:
+                positionAxisAttributes(start, end, x, y, attribute, value);
                 return;
             case TYPE_CARTESIAN:
             default:
@@ -247,6 +267,44 @@ public class KeyPosition extends KeyPositionBase {
         float startCenterY = start.centerY();
         float endCenterX = end.centerX();
         float endCenterY = end.centerY();
+        float pathVectorX = endCenterX - startCenterX;
+        float pathVectorY = endCenterY - startCenterY;
+        if (attribute[0] != null) { // they are saying what to use
+            if (PERCENT_X.equals(attribute[0])) {
+                value[0] = (x - startCenterX) / pathVectorX;
+                value[1] = (y - startCenterY) / pathVectorY;
+            } else {
+                value[1] = (x - startCenterX) / pathVectorX;
+                value[0] = (y - startCenterY) / pathVectorY;
+            }
+        } else { // we will use what we want to
+            attribute[0] = PERCENT_X;
+            value[0] = (x - startCenterX) / pathVectorX;
+            attribute[1] = PERCENT_Y;
+            value[1] = (y - startCenterY) / pathVectorY;
+        }
+    }
+
+    void positionAxisAttributes(RectF start,
+                                RectF end,
+                                float x,
+                                float y,
+                                String[] attribute,
+                                float[] value) {
+        float startCenterX = start.centerX();
+        float startCenterY = start.centerY();
+        float endCenterX = end.centerX();
+        float endCenterY = end.centerY();
+        if (startCenterX > endCenterX) {
+            float tmp = startCenterX;
+            startCenterX = endCenterX;
+            endCenterX = tmp;
+        }
+        if (startCenterY > endCenterY) {
+            float tmp = startCenterY;
+            startCenterY = endCenterY;
+            endCenterY = tmp;
+        }
         float pathVectorX = endCenterX - startCenterX;
         float pathVectorY = endCenterY - startCenterY;
         if (attribute[0] != null) { // they are saying what to use
